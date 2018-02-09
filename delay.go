@@ -8,7 +8,7 @@ import (
 
 var sharedRNG = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-// Delay makes it easy to add (threadsafe) configurable delays to other
+// D (Delay) makes it easy to add (threadsafe) configurable delays to other
 // objects.
 type D interface {
 	Set(time.Duration) time.Duration
