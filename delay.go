@@ -13,6 +13,7 @@ var sharedRNG = rand.New(rand.NewSource(time.Now().UnixNano()))
 type D interface {
 	Set(time.Duration) time.Duration
 	Wait()
+	NextWaitTime() time.Duration
 	Get() time.Duration
 }
 
@@ -35,9 +36,16 @@ func (d *delay) Set(t time.Duration) time.Duration {
 }
 
 func (d *delay) Wait() {
+	nextWaitTime := d.NextWaitTime()
 	d.l.RLock()
+	time.Sleep(nextWaitTime)
 	defer d.l.RUnlock()
-	time.Sleep(d.t)
+}
+
+func (d *delay) NextWaitTime() time.Duration {
+	d.l.Lock()
+	defer d.l.Unlock()
+	return d.t
 }
 
 func (d *delay) Get() time.Duration {
@@ -68,11 +76,10 @@ type variableNormal struct {
 	rng *rand.Rand
 }
 
-func (d *variableNormal) Wait() {
+func (d *variableNormal) NextWaitTime() time.Duration {
 	d.l.RLock()
 	defer d.l.RUnlock()
-	randomDelay := time.Duration(d.rng.NormFloat64() * float64(d.std))
-	time.Sleep(randomDelay + d.t)
+	return time.Duration(d.rng.NormFloat64()*float64(d.std)) + d.t
 }
 
 // VariableUniform is a delay following a uniform distribution
@@ -97,9 +104,8 @@ type variableUniform struct {
 	rng *rand.Rand
 }
 
-func (d *variableUniform) Wait() {
+func (d *variableUniform) NextWaitTime() time.Duration {
 	d.l.RLock()
 	defer d.l.RUnlock()
-	randomDelay := time.Duration(d.rng.Float64() * float64(d.d))
-	time.Sleep(randomDelay + d.t)
+	return time.Duration(d.rng.Float64()*float64(d.d)) + d.t
 }
