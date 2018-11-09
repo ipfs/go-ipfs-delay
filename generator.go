@@ -18,11 +18,10 @@ func VariableNormalGenerator(std time.Duration, rng *rand.Rand) Generator {
 		rng = sharedRNG
 	}
 
-	v := &variableNormal{
+	return &variableNormal{
 		std: std,
 		rng: rng,
 	}
-	return v
 }
 
 type variableNormal struct {
@@ -40,11 +39,10 @@ func VariableUniformGenerator(d time.Duration, rng *rand.Rand) Generator {
 		rng = sharedRNG
 	}
 
-	v := &variableUniform{
+	return &variableUniform{
 		d:   d,
 		rng: rng,
 	}
-	return v
 }
 
 type variableUniform struct {
