@@ -46,14 +46,6 @@ func TestDelaySetAndGet(t *testing.T) {
 
 }
 
-type recordSleeper struct {
-	lastSleep time.Duration
-}
-
-func (rs *recordSleeper) Sleep(t time.Duration) {
-	rs.lastSleep = t
-}
-
 type fixedAdd struct {
 	toAdd time.Duration
 }
@@ -66,16 +58,10 @@ func TestDelaySleep(t *testing.T) {
 	initialValue := 1000 * time.Millisecond
 	toAdd := 500 * time.Millisecond
 	generator := &fixedAdd{toAdd: toAdd}
-	sleeper := &recordSleeper{lastSleep: -1}
-
-	delay := Delay(initialValue, generator, sleeper)
+	delay := Delay(initialValue, generator)
 
 	if delay.NextWaitTime() != initialValue+toAdd {
 		t.Fatal("NextWaitTime should call the generator")
 	}
 
-	delay.Wait()
-	if sleeper.lastSleep != initialValue+toAdd {
-		t.Fatal("Wait should sleep based on the next wait time generated")
-	}
 }
