@@ -1,36 +1,18 @@
 package delay
 
 import (
-	"math"
-	"math/rand"
 	"testing"
 	"time"
 )
 
-const testSeed = 99
-
 func TestDelaySetAndGet(t *testing.T) {
-	initialValue, err := time.ParseDuration("1000ms")
-
-	if err != nil {
-		t.Fatal("Parse error during setup")
-	}
-
-	modifiedValue, err := time.ParseDuration("2000ms")
-
-	if err != nil {
-		t.Fatal("Parse error during setup")
-	}
-
-	deviation, err := time.ParseDuration("1000ms")
-
-	if err != nil {
-		t.Fatal("Parse error during setup")
-	}
+	initialValue := 1000 * time.Millisecond
+	modifiedValue := 2000 * time.Millisecond
+	deviation := 1000 * time.Millisecond
 
 	fixed := Fixed(initialValue)
-	variableNormal := VariableNormal(initialValue, deviation, rand.New(rand.NewSource(testSeed)))
-	variableUniform := VariableUniform(initialValue, deviation, rand.New(rand.NewSource(testSeed)))
+	variableNormal := VariableNormal(initialValue, deviation, nil)
+	variableUniform := VariableUniform(initialValue, deviation, nil)
 
 	if fixed.Get().Seconds() != 1 {
 		t.Fatal("Fixed delay not initialized correctly")
@@ -64,34 +46,36 @@ func TestDelaySetAndGet(t *testing.T) {
 
 }
 
-func TestDelayNextWaitTime(t *testing.T) {
-	initialValue, err := time.ParseDuration("1000ms")
+type recordSleeper struct {
+	lastSleep time.Duration
+}
 
-	if err != nil {
-		t.Fatal("Parse error during setup")
+func (rs *recordSleeper) Sleep(t time.Duration) {
+	rs.lastSleep = t
+}
+
+type fixedAdd struct {
+	toAdd time.Duration
+}
+
+func (fa *fixedAdd) NextWaitTime(t time.Duration) time.Duration {
+	return t + fa.toAdd
+}
+
+func TestDelaySleep(t *testing.T) {
+	initialValue := 1000 * time.Millisecond
+	toAdd := 500 * time.Millisecond
+	generator := &fixedAdd{toAdd: toAdd}
+	sleeper := &recordSleeper{lastSleep: -1}
+
+	delay := Delay(initialValue, sleeper, generator)
+
+	if delay.NextWaitTime() != initialValue+toAdd {
+		t.Fatal("NextWaitTime should call the generator")
 	}
 
-	deviation, err := time.ParseDuration("1000ms")
-
-	if err != nil {
-		t.Fatal("Parse error during setup")
+	delay.Wait()
+	if sleeper.lastSleep != initialValue+toAdd {
+		t.Fatal("Wait should sleep based on the next wait time generated")
 	}
-
-	fixed := Fixed(initialValue)
-	firstRandomNormal := rand.New(rand.NewSource(testSeed)).NormFloat64()
-	firstRandom := rand.New(rand.NewSource(testSeed)).Float64()
-	variableNormal := VariableNormal(initialValue, deviation, rand.New(rand.NewSource(testSeed)))
-	variableUniform := VariableUniform(initialValue, deviation, rand.New(rand.NewSource(testSeed)))
-	if fixed.NextWaitTime().Seconds() != 1 {
-		t.Fatal("Fixed delay output incorrect wait time")
-	}
-
-	if math.Abs(variableNormal.NextWaitTime().Seconds()-(firstRandomNormal*deviation.Seconds()+initialValue.Seconds())) > 0.00001 {
-		t.Fatal("Normalized variable delay output incorrect wait time")
-	}
-
-	if math.Abs(variableUniform.NextWaitTime().Seconds()-(firstRandom*deviation.Seconds()+initialValue.Seconds())) > 0.00001 {
-		t.Fatal("Uniform variable delay output incorrect wait time")
-	}
-
 }
