@@ -38,8 +38,8 @@ func (d *delay) Set(t time.Duration) time.Duration {
 func (d *delay) Wait() {
 	nextWaitTime := d.NextWaitTime()
 	d.l.RLock()
-	time.Sleep(nextWaitTime)
 	defer d.l.RUnlock()
+	time.Sleep(nextWaitTime)
 }
 
 func (d *delay) NextWaitTime() time.Duration {
