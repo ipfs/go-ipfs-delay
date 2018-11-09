@@ -68,7 +68,7 @@ func TestDelaySleep(t *testing.T) {
 	generator := &fixedAdd{toAdd: toAdd}
 	sleeper := &recordSleeper{lastSleep: -1}
 
-	delay := Delay(initialValue, sleeper, generator)
+	delay := Delay(initialValue, generator, sleeper)
 
 	if delay.NextWaitTime() != initialValue+toAdd {
 		t.Fatal("NextWaitTime should call the generator")

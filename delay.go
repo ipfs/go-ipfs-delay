@@ -20,8 +20,8 @@ type D interface {
 type delay struct {
 	l         sync.RWMutex
 	t         time.Duration
-	sleeper   Sleeper
 	generator Generator
+	sleeper   Sleeper
 }
 
 func (d *delay) Set(t time.Duration) time.Duration {
@@ -51,7 +51,10 @@ func (d *delay) Get() time.Duration {
 }
 
 // Delay generates a generic delay form a t, a sleeper, and a generator
-func Delay(t time.Duration, sleeper Sleeper, generator Generator) D {
+func Delay(t time.Duration, generator Generator, sleeper Sleeper) D {
+	if sleeper == nil {
+		sleeper = sharedRealSleeper
+	}
 	return &delay{
 		t:         t,
 		sleeper:   sleeper,
@@ -61,19 +64,19 @@ func Delay(t time.Duration, sleeper Sleeper, generator Generator) D {
 
 // Fixed returns a delay with fixed latency
 func Fixed(t time.Duration) D {
-	return Delay(t, sharedRealSleeper, FixedGenerator())
+	return Delay(t, FixedGenerator(), nil)
 }
 
 // VariableUniform is a delay following a uniform distribution
 // Notice that to implement the D interface Set can only change the minimum delay
 // the delta is set only at initialization
 func VariableUniform(t, d time.Duration, rng *rand.Rand) D {
-	return Delay(t, sharedRealSleeper, VariableUniformGenerator(d, rng))
+	return Delay(t, VariableUniformGenerator(d, rng), nil)
 }
 
 // VariableNormal is a delay following a normal distribution
 // Notice that to implement the D interface Set can only change the mean delay
 // the standard deviation is set only at initialization
 func VariableNormal(t, std time.Duration, rng *rand.Rand) D {
-	return Delay(t, sharedRealSleeper, VariableNormalGenerator(std, rng))
+	return Delay(t, VariableNormalGenerator(std, rng), nil)
 }
