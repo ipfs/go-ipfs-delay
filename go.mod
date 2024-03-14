@@ -1,3 +1,3 @@
 module github.com/ipfs/go-ipfs-delay
 
-go 1.20
+go 1.21
